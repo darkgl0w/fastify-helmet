@@ -558,7 +558,7 @@ test('It should be able to conditionally apply the middlewares through the `helm
 })
 
 test('It should apply helmet headers when returning error messages', async (t) => {
-  t.plan(2)
+  t.plan(4)
 
   const fastify = Fastify()
   await fastify.register(helmet, { enableCSPNonces: true })
@@ -572,6 +572,11 @@ test('It should apply helmet headers when returning error messages', async (t) =
     return { message: 'ok' }
   })
 
+  fastify.get('/error-handler', {
+  }, async (request, reply) => {
+    return Promise.reject({message: 'error handler triggered'})
+  })
+
   const expected = {
     'x-dns-prefetch-control': 'off',
     'x-frame-options': 'SAMEORIGIN',
@@ -580,11 +585,21 @@ test('It should apply helmet headers when returning error messages', async (t) =
     'x-xss-protection': '0'
   }
 
+  {
+    const response = await fastify.inject({
+      method: 'GET',
+      path: '/'
+    })
+
+    t.equal(response.statusCode, 401)
+    t.has(response.headers, expected)
+  }
+
   const response = await fastify.inject({
     method: 'GET',
-    path: '/'
+    path: '/error-handler'
   })
 
-  t.equal(response.statusCode, 401)
+  t.equal(response.statusCode, 500)
   t.has(response.headers, expected)
 })
