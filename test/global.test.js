@@ -574,7 +574,7 @@ test('It should apply helmet headers when returning error messages', async (t) =
 
   fastify.get('/error-handler', {
   }, async (request, reply) => {
-    return Promise.reject({message: 'error handler triggered'})
+    return Promise.reject(new Error('error handler triggered'))
   })
 
   const expected = {
